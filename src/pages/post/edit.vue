@@ -157,31 +157,34 @@
                         </a-form-model-item>
                     </a-col>
                 </a-row>
+
                 <a-form-model-item 
-                    label="封面"
-                    ref="cover" 
-                    prop="cover">
-                    <div class="upload-icon">
-                        <a-input
-                            size="large"
-                            type="text"
-                            placeholder="请上传封面"
-                            v-model="form.cover"
-                        />
-                        <a-button 
-                        @click="uploadCover" 
-                        v-action="'/media/upload'" 
-                        class="form-button"  size="large" type="primary" style="margin-left: 10px;">
-                            上传
-                        </a-button>
-                    </div>
-                </a-form-model-item>
-               
-                <a-form-model-item>
-                    <TinyMceEditor @writeContent="writeContent"   
-                    :valueContont="form.content"/>
+                    label="内容"
+                    ref="content" 
+                    prop="content">
+                    <a-textarea  :rows="4"
+                        placeholder="请输入内容"
+                        v-model="form.content"
+                    />
                 </a-form-model-item>
 
+                <div  class="create-images">
+                    <p>最多上传9张图片</p>
+                    <div class="image-list">
+                        <div class="item" v-for="(item,index) in form.images" :key="index">
+                            <div class="image-box">
+                                <img :src="item | resetImage(100,100)" alt="xxx">
+                                <b @click="removeImg(index)" class="img-close"><a-icon type="close" /></b>
+                            </div>
+                        </div>
+                        <div lass="item" v-if="form.images.length < 9">
+                            <div class="add-image" @click="selectImg">
+                                <a-icon class="icon" type="plus" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+               
 
                 <a-form-model-item 
                     label="是否设置资源"
@@ -425,12 +428,8 @@ import { All } from '@/api/forum'
 import { loopCate } from '@/utils/tree/cate'
 import { toTree } from '@/utils/tree/tree'
 import {  List } from '@/api/grade'
-import TinyMceEditor from "@/components/Editor/Tinymce"
 
 export default {
-    components: {
-        TinyMceEditor
-    },
     data() {
         return {
             form:{
@@ -440,7 +439,7 @@ export default {
                 cover: undefined,
                 video: undefined,
                 title:undefined,
-                
+                images:[],
                 tags:[],
                 content:undefined,
                 hots:undefined,
@@ -521,9 +520,8 @@ export default {
                 }
 
                 this.form = Object.assign(this.form,editInfo.data.info)
-                // this.form.content = editInfo.data.info.content.replace(/<br\s*\/?>/gi, '\n'); 
-
-
+             
+                this.form.content =editInfo.data.info.content.replace(/<br\/>/g,"\n"); 
                 this.form.tags = editInfo.data.info.tagList == null ? [] :  editInfo.data.info.tagList.map((itme)=>{
                     return itme.title
                 })
@@ -539,7 +537,7 @@ export default {
                 this.resourceform.gainCode = editInfo.data.info.resource.gainCode
                 this.resourceform.untieCode = editInfo.data.info.resource.untieCode
                 this.resourceform.link = editInfo.data.info.resource.link
- 
+
         
             } catch (error) {
                 
@@ -567,17 +565,29 @@ export default {
                 console.log(err)
             })
         },
-        uploadCover(){
+        selectImg(){
             this.$Upload().then((res)=>{
                 if (res != false) {
-                    this.form.cover = res
+                    if (this.form.images.length <= 8) {
+                        this.form.images.push(res)
+                    }else{
+                        this.$message.error(
+                           "上传图片数量最多只能为9张",
+                            3
+                        )
+                        return
+                    }
+                     this.form.video = undefined
+                    
                 }
             }).catch((err)=>{
-                console.log(err)
+               this.form.images = []
+                // this.createForm.link = null
             })
+            
         },
-        writeContent(e){
-            this.form.content = e
+        removeImg(i){
+            this.form.images.splice(i,1)
         },
         addAttr(){
             this.resourceform.attr.push({
@@ -596,6 +606,7 @@ export default {
                         if (valid) {
                         
                             this.form.id = this.id
+                            this.form.content = this.form.content.replace(/\n/g,"<br/>");  
                             this.form.resource = this.resourceform
                             this.postEdit(this.form)
                            
@@ -721,6 +732,77 @@ export default {
         .input-box{
             flex: 1;
             margin-right: 20px;
+        }
+    }
+}
+.create-images{
+    margin-bottom: 20px;
+    p{
+        font-size: 12px;
+        padding-bottom: 15px;
+        display: flex;
+        align-items: center;
+        line-height: 1;
+    }
+    .image-list{
+        display: flex;
+        flex-wrap: wrap;
+        .add-image{
+            cursor: pointer;
+            box-shadow: inset 0 0 2px rgb(137, 137, 137);
+            border-radius: 2px;
+            height: 100px;
+            width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            .icon{
+                color: rgb(137, 137, 137);
+                font-size: 30px;
+            }
+        }   
+        .item{
+            height: 100px;
+            width: 100px;
+            position: relative;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            .image-box{
+                height: 100px;
+                width: 100px;
+                padding-top: 100%;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                cursor: move;
+                img{
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    height: 100px;
+                    width: 100px;
+                    box-shadow: inset 0 0 2px rgb(137, 137, 137);
+                    border-radius: 2px;
+                }
+                .img-close{
+                    position: absolute;
+                    right: 0;
+                    top: 9px;
+                    width: 14px;
+                    display: block;
+                    background: rgba(255, 255, 255, 0.88);
+                    text-align: center;
+                    height: 14px;
+                    border-radius: 100%;
+                    cursor: pointer;
+                    line-height: 14px;
+                    text-align: center;
+                    margin-right: 10px;
+                    font-size: 12px;
+                }
+            }
         }
     }
 }
