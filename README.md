@@ -31,6 +31,8 @@
 
 前台仓库git：https://github.com/EForinaJ/xiapaopao-web
 
+移动Wap仓库git：https://github.com/EForinaJ/xiapaopao-wap
+
 后台仓库git：https://github.com/EForinaJ/xiapaopao-admin
 
 后台应用仓库git：https://github.com/EForinaJ/xiapaopao-server
